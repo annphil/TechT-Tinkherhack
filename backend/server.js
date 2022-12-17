@@ -10,6 +10,7 @@ const app = express();
 let port = process.env.PORT || 3000;
 const post = util.promisify(request.post);
 const get = util.promisify(request.get);
+let words= scan();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -21,8 +22,8 @@ const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 
 let timeout = 0;
 
-const streamURL = new URL(
-  "https://api.twitter.com/2/tweets/search/stream?tweet.fields=context_annotations&expansions=author_id"
+const FetchDmURL = new URL(
+  "https://api.twitter.com/1.1/direct_messages/events/list.json"
 );
 
 const rulesURL = new URL(
@@ -108,7 +109,7 @@ app.post("/api/rules", async (req, res) => {
 const streamTweets = (socket, token) => {
 
   const config = {
-    url: streamURL,
+    url: FetchDmURL,
     auth: {
       bearer: token,
     },
@@ -145,6 +146,10 @@ const streamTweets = (socket, token) => {
     socket.emit("authError", authMessage);
   }
 };
+
+const scan = async(stream) => {
+  console.log(stream.scan);
+}
 
 const reconnect = async (stream, socket, token) => {
   timeout++;
