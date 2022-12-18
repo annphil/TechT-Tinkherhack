@@ -1,177 +1,194 @@
+
 const express = require("express");
+const cors=require('cors');
+const app = express();
 const bodyParser = require("body-parser");
 const util = require("util");
-const request = require("request");
 const path = require("path");
 const socketIo = require("socket.io");
 const http = require("http");
+const router=require('./dm.router');
+const port = 3000;
+app.use(express.json());
+app.use(cors());
+app.use('/dm',router);
 
-const app = express();
-let port = process.env.PORT || 3000;
-const post = util.promisify(request.post);
-const get = util.promisify(request.get);
 
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
-const server = http.createServer(app);
-const io = socketIo(server);
+// const express = require("express");
+// const bodyParser = require("body-parser");
+// const util = require("util");
+// const request = require("request");
+// const path = require("path");
+// const socketIo = require("socket.io");
+// const http = require("http");
 
-const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+// const app = express();
+// let port = process.env.PORT || 3000;
+// const post = util.promisify(request.post);
+// const get = util.promisify(request.get);
 
-let timeout = 0;
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
 
-const FetchDmURL = new URL(
-  "https://api.twitter.com/1.1/direct_messages/events/list.json"
-);
+// const server = http.createServer(app);
+// const io = socketIo(server);
 
-const rulesURL = new URL(
-  "https://api.twitter.com/2/tweets/search/stream/rules"
-);
+// const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 
-const errorMessage = {
-  title: "Please Wait",
-  detail: "Waiting for new Tweets to be posted...",
-};
+// let timeout = 0;
 
-const authMessage = {
-  title: "Could not authenticate",
-  details: [
-    `Please make sure your bearer token is correct. 
-      If using Glitch, remix this app and add it to the .env file`,
-  ],
-  type: "https://developer.twitter.com/en/docs/authentication",
-};
+// const FetchDmURL = new URL(
+//   "https://api.twitter.com/1.1/direct_messages/events/list.json"
+// );
 
-const sleep = async (delay) => {
-  return new Promise((resolve) => setTimeout(() => resolve(true), delay));
-};
+// const rulesURL = new URL(
+//   "https://api.twitter.com/2/tweets/search/stream/rules"
+// );
 
-app.get("/api/rules", async (_req, res) => {
-  if (!BEARER_TOKEN) {
-    res.status(400).send(authMessage);
-  }
+// const errorMessage = {
+//   title: "Please Wait",
+//   detail: "Waiting for new Tweets to be posted...",
+// };
 
-  const token = BEARER_TOKEN;
-  const requestConfig = {
-    url: rulesURL,
-    auth: {
-      bearer: token,
-    },
-    json: true,
-  };
+// const authMessage = {
+//   title: "Could not authenticate",
+//   details: [
+//     `Please make sure your bearer token is correct. 
+//       If using Glitch, remix this app and add it to the .env file`,
+//   ],
+//   type: "https://developer.twitter.com/en/docs/authentication",
+// };
 
-  try {
-    const response = await get(requestConfig);
+// const sleep = async (delay) => {
+//   return new Promise((resolve) => setTimeout(() => resolve(true), delay));
+// };
 
-    if (response.statusCode !== 200) {
-      if (response.statusCode === 403) {
-        res.status(403).send(response.body);
-      } else {
-        throw new Error(response.body.error.message);
-      }
-    }
+// app.get("/api/rules", async (_req, res) => {
+//   if (!BEARER_TOKEN) {
+//     res.status(400).send(authMessage);
+//   }
 
-    res.send(response);
-  } catch (e) {
-    res.send(e);
-  }
-});
+//   const token = BEARER_TOKEN;
+//   const requestConfig = {
+//     url: rulesURL,
+//     auth: {
+//       bearer: token,
+//     },
+//     json: true,
+//   };
 
-app.post("/api/rules", async (req, res) => {
-  if (!BEARER_TOKEN) {
-    res.status(400).send(authMessage);
-  }
+//   try {
+//     const response = await get(requestConfig);
 
-  const token = BEARER_TOKEN;
-  const requestConfig = {
-    url: rulesURL,
-    auth: {
-      bearer: token,
-    },
-    json: req.body,
-  };
+//     if (response.statusCode !== 200) {
+//       if (response.statusCode === 403) {
+//         res.status(403).send(response.body);
+//       } else {
+//         throw new Error(response.body.error.message);
+//       }
+//     }
 
-  try {
-    const response = await post(requestConfig);
+//     res.send(response);
+//   } catch (e) {
+//     res.send(e);
+//   }
+// });
 
-    if (response.statusCode === 200 || response.statusCode === 201) {
-      res.send(response);
-    } else {
-      throw new Error(response);
-    }
-  } catch (e) {
-    res.send(e);
-  }
-});
+// app.post("/api/rules", async (req, res) => {
+//   if (!BEARER_TOKEN) {
+//     res.status(400).send(authMessage);
+//   }
 
-const streamTweets = (socket, token) => {
+//   const token = BEARER_TOKEN;
+//   const requestConfig = {
+//     url: rulesURL,
+//     auth: {
+//       bearer: token,
+//     },
+//     json: req.body,
+//   };
 
-  const config = {
-    url: FetchDmURL,
-    auth: {
-      bearer: token,
-    },
-    timeout: 31000,
-  };
+//   try {
+//     const response = await post(requestConfig);
 
-  try {
-    const stream = request.get(config);
+//     if (response.statusCode === 200 || response.statusCode === 201) {
+//       res.send(response);
+//     } else {
+//       throw new Error(response);
+//     }
+//   } catch (e) {
+//     res.send(e);
+//   }
+// });
 
-    stream
-      .on("data", (data) => {
-        try {
-          const json = JSON.parse(data);
-          if (json.connection_issue) {
-            socket.emit("error", json);
-            reconnect(stream, socket, token);
-          } else {
-            if (json.data) {
-              socket.emit("tweet", json);
-            } else {
-              socket.emit("authError", json);
-            }
-          }
-        } catch (e) {
-          socket.emit("heartbeat");
-        }
-      })
-      .on("error", () => {
-        // Connection timed out
-        socket.emit("error", errorMessage);
-        reconnect(stream, socket, token);
-      });
-  } catch (e) {
-    socket.emit("authError", authMessage);
-  }
-};
+// const streamTweets = (socket, token) => {
 
-const reconnect = async (stream, socket, token) => {
-  timeout++;
-  stream.abort();
-  await sleep(2 ** timeout * 1000);
-  streamTweets(socket, token);
-};
+//   const config = {
+//     url: FetchDmURL,
+//     auth: {
+//       bearer: token,
+//     },
+//     timeout: 31000,
+//   };
 
-io.on("connection", async () => {
-  try {
-    const token = BEARER_TOKEN;
-    io.emit("connect", "Client connected");
-  } catch (e) {
-    io.emit("authError", authMessage);
-  }
-});
+//   try {
+//     const stream = request.get(config);
 
-console.log("NODE_ENV is", process.env.NODE_ENV);
+//     stream
+//       .on("data", (data) => {
+//         try {
+//           const json = JSON.parse(data);
+//           if (json.connection_issue) {
+//             socket.emit("error", json);
+//             reconnect(stream, socket, token);
+//           } else {
+//             if (json.data) {
+//               socket.emit("tweet", json);
+//             } else {
+//               socket.emit("authError", json);
+//             }
+//           }
+//         } catch (e) {
+//           socket.emit("heartbeat");
+//         }
+//       })
+//       .on("error", () => {
+//         // Connection timed out
+//         socket.emit("error", errorMessage);
+//         reconnect(stream, socket, token);
+//       });
+//   } catch (e) {
+//     socket.emit("authError", authMessage);
+//   }
+// };
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../build")));
-  app.get("*", (request, res) => {
-    res.sendFile(path.join(__dirname, "../build", "index.html"));
-  });
-} else {
-  port = 3001;
-}
+// const reconnect = async (stream, socket, token) => {
+//   timeout++;
+//   stream.abort();
+//   await sleep(2 ** timeout * 1000);
+//   streamTweets(socket, token);
+// };
 
-server.listen(port, () => console.log(`Listening on port ${port}`));
+// io.on("connection", async () => {
+//   try {
+//     const token = BEARER_TOKEN;
+//     io.emit("connect", "Client connected");
+//   } catch (e) {
+//     io.emit("authError", authMessage);
+//   }
+// });
+
+// console.log("NODE_ENV is", process.env.NODE_ENV);
+
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(__dirname, "../build")));
+//   app.get("*", (request, res) => {
+//     res.sendFile(path.join(__dirname, "../build", "index.html"));
+//   });
+// } else {
+//   port = 3001;
+// }
+
+// server.listen(port, () => console.log(`Listening on port ${port}`));
