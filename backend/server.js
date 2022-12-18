@@ -10,7 +10,7 @@ const app = express();
 let port = process.env.PORT || 3000;
 const post = util.promisify(request.post);
 const get = util.promisify(request.get);
-let words= scan();
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -146,10 +146,6 @@ const streamTweets = (socket, token) => {
     socket.emit("authError", authMessage);
   }
 };
-
-const scan = async(stream) => {
-  console.log(stream.scan);
-}
 
 const reconnect = async (stream, socket, token) => {
   timeout++;

@@ -9,4 +9,4 @@ filter.addWords(...words);
 
 }
 
-export{scan};
+module.exports{scan};
