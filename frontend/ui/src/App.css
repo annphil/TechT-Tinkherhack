@@ -25,6 +25,11 @@ width:1-1000px;
   
   
 }
+.body{
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
 .class2{
   background-color: rgb(0, 174, 255);
   height:40px;

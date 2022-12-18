@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+/* Create two unequal columns that floats next to each other */
+.column {
+  float: left;
+  padding: 10px;
+  height: 300px; /* Should be removed. Only for demonstration */
+}
+
+.left {
+  width: 25%;
+  border-color: whitesmoke;
+}
+
+.right {
+  width: 75%;
+  border-color: whitesmoke;
+  border-left: 10px;
+  height:10000px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+</style>
+</head>
+<body style="color:white; font:chirp; background-color: black;">
+
+<h2 >Messages</h2>
+
+<div class="row">
+  <div class="column left">
+    <h2></h2>
+    <table style="width:25%; border-right:100px; border-color: whitesmoke;" >
+    <tr>
+        <td>Logo</td>
+    </tr>
+<tr><td>Messages</td></tr>
+<tr><td>Notifications</td></tr>
+  </table>  
+  </div>
+  <div class="column right" style="background-color:rgb(70, 67, 67);">
+    <h2>Direct Messages</h2>
+    
+  </div>
+</div>
+
+</body>
+</html>
